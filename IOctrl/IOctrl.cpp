@@ -62,7 +62,7 @@ Regulator::Regulator(byte K, float vs){
 }
 
 void Regulator::gain(byte K){
-_K = K;;
+_K = K;
 }
 
 void Regulator::sustain(float vs){
