@@ -82,11 +82,6 @@ class Regulator {
 	private:
 		byte _K;
 		byte _vs;	
-	
-
 };
-
-
-
 
 #endif
