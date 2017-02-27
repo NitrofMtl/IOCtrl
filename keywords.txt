@@ -1,0 +1,30 @@
+
+IOctrl	KEYWORD2
+
+RTDinChannels	KEYWORD2
+channelSet	KEYWORD2
+AinputPin	KEYWORD2
+Ainput	KEYWORD2
+offset	KEYWORD2
+RTDSwitch	KEYWORD2
+channelName	KEYWORD2
+backupInput	KEYWORD2
+restoreInput	KEYWORD2
+
+SSRoutput	KEYWORD2
+OutChannels	KEYWORD2
+ssrOut	KEYWORD2
+dutyCycle	KEYWORD2
+Aoutput	KEYWORD2
+sp	KEYWORD2
+channelSwitch	KEYWORD2
+permRun	KEYWORD2
+smm	KEYWORD2
+backupSSROutput	KEYWORD2
+restoreSSROutput	KEYWORD2
+
+Regulator	KEYWORD2
+regLoop	KEYWORD2
+gain	KEYWORD2
+sustain	KEYWORD2
+
