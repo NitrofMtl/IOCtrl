@@ -33,7 +33,7 @@
 
 const int bitScale = 12;
 #define floatToFixed(x)(x*(long)(1<<bitScale))
-#define fixedToLong(x)(x/(1<<bitScale))
+#define fixedToInt(x)(x/(1<<bitScale))
 
 class RTDinChannels {
 	private:
@@ -61,31 +61,34 @@ class SSRoutput {
 	  	void OutChannels(byte ouputPin, float Sp, float Smm, bool ChSwitch);
 		void ssrOut(RTDinChannels* input);
 		void dutyCycle(unsigned int dutyCycle);
-	  	unsigned long Aoutput = 0; //declare struct var
+	  	unsigned long Aoutput = 0;
 	  	float sp;
 	  	bool channelSwitch;
 	  	bool permRun = false;
 	  	void smm(float Smm);
 		JsonObject& backupSSROutput(JsonBuffer& jsonBuffer);
 		void restoreSSROutput(JsonObject& output);
+		void toggleSwitch();
 	private:
 		float _smm;
 	  	byte ssrPin;
-		unsigned int _dutyCycle = 10000; //time of the loop
+		unsigned int _dutyCycle = 100; //time of the loop
 		unsigned int cycleIn = 0;
-  		unsigned int cycleOut = 0;
+  		//unsigned int cycleOut = 0;
+  		unsigned long timeCounter = 0;
+  		bool state = false;
 };
 
 class Regulator {
 	public:
 		Regulator();
 		Regulator(byte K, float vs);
-		unsigned long regLoop(RTDinChannels* input, SSRoutput* output);
+		unsigned int regLoop(RTDinChannels* input, SSRoutput* output);
 		void gain(byte K);
 		void sustain(float vs);
 	private:
 		byte _K;
-		byte _vs;	
+		float _vs;	
 };
 
 #endif

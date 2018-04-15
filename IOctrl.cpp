@@ -67,25 +67,12 @@ void Regulator::sustain(float vs){
 	_vs = vs;
 }
 
-/*
-byte Regulator::regLoop(RTDinChannels* input, SSRoutput* output){
- 	Regulator();
-	int Aoutput = 0; //output regulation variable in %
-	if (output->channelSwitch) {
-    	int er = floatToFixed(output->sp) - floatToFixed(input->Ainput); // calculate the error of process
-    	Aoutput = (er + floatToFixed(_vs)) * _K; //calculate the output power
-    	Aoutput = constrain(fixedTofloat(Aoutput), 0, 100); //constrain the output in 0-100 % range
-	} else Aoutput = 0;
-	return Aoutput;
-}*/
-
-unsigned long Regulator::regLoop(RTDinChannels* input, SSRoutput* output){
-	unsigned long Aoutput = 0; //output regulation variable in %
-	
+unsigned int Regulator::regLoop(RTDinChannels* input, SSRoutput* output){
+	long Aoutput = 0; //output regulation variable in ,0%	
 	int er = floatToFixed(output->sp) - floatToFixed(input->Ainput); // calculate the error of process
 	Aoutput = (er + floatToFixed(_vs)) * _K; //calculate the output power
-	Aoutput = constrain(Aoutput, 0, floatToFixed(100)); //constrain the output in 0-100 % range
-	return fixedToLong(Aoutput);
+	Aoutput = constrain(fixedToInt(Aoutput), 0, 100); //constrain the output in 0-100 % range, 0,1 step
+	return Aoutput;
 }
 
 SSRoutput::SSRoutput() { //struct initiation function
@@ -126,50 +113,67 @@ void SSRoutput::smm(float Smm){
 	_smm = Smm;
 }
 
-void SSRoutput::ssrOut(RTDinChannels* input){
-	Regulator reg;
-
-	if (!input->RTDSwitch || !channelSwitch){
-		permRun = false;
-		Aoutput = 0;
-		digitalWrite(ssrPin, LOW); //be sure ssr is off if switch off		
-		return; //break loop if switch off
-	} 
-	else Aoutput = reg.regLoop(input, this); 
-
-	unsigned long cycleOn = (_dutyCycle * Aoutput / 100); //calculate the time off
-	unsigned long cycleOff = (_dutyCycle - cycleOn);        //calculate the time on
-
-	unsigned long now = millis();
-
-	//check if the error is bigger then the treshold, if yes set permisssion to true
-	if (Aoutput >= _smm) permRun = true;
-	
-	extern float vs;
-
-	//check if the error is enough small, if yes set permisssion to false
-	if (permRun && (input->Ainput >= (sp + vs))) {
-		permRun = false;
-		Aoutput = 0;
-		cycleIn = 0;
-		cycleOut = 0;
-	}
-
-	if(!permRun){ //non running loop
-	digitalWrite(ssrPin, LOW); 
-	cycleIn = 0;
-	cycleOut = 0;
-	return;
-	}
-
-	//output running if permisssion true
-	if ((HIGH != digitalRead(ssrPin)) && (now > cycleOut)){
-		digitalWrite(ssrPin, HIGH);
-		cycleIn = now + cycleOn;
-		}
-	else if ((LOW != digitalRead(ssrPin)) && (now > cycleIn)){
+void SSRoutput::toggleSwitch() {
+	channelSwitch=!channelSwitch;
+	if (!channelSwitch) {
 		digitalWrite(ssrPin, LOW);
-		cycleOut = now + cycleOff;
+		timeCounter = 0;
+		state = false;
 	}
 }
 
+void SSRoutput::ssrOut(RTDinChannels* input){
+	if (!channelSwitch) {
+		state = false;
+		return;
+	}
+
+	Regulator reg;
+	extern float vs;
+
+	//run regulator on each check only if output is not already on
+	if (!permRun) {
+		if (timeCounter < _dutyCycle) {//check output only 10sec interval
+			timeCounter++;
+			return; 
+		}
+		timeCounter = 0;
+		Aoutput = reg.regLoop(input, this);
+		if (Aoutput < _smm) {
+			return; //return if treshold is not enough
+		}
+		
+		permRun = true;
+		digitalWrite(ssrPin, HIGH);
+		cycleIn = Aoutput; //set duty cycle				
+		return;
+	}
+
+	//if cycle in is 100% restart counter at the end of dutycycle
+	if ( (cycleIn == timeCounter) && (timeCounter == _dutyCycle) ) { 
+		timeCounter = 0;
+		Aoutput = reg.regLoop(input, this);//recalculate needs of output
+		cycleIn = Aoutput; //Calculate the time on
+		return;
+	} 
+
+	if (cycleIn == timeCounter) {	
+		digitalWrite(ssrPin, LOW);
+		timeCounter++;
+		return;
+	}
+
+	if (timeCounter == _dutyCycle) {
+		timeCounter = 0;
+		if (input->Ainput >= (sp + vs)){
+			permRun = false; //rester permission of work if error getting to small
+			digitalWrite(ssrPin, LOW);
+			return;
+		}
+		Aoutput = reg.regLoop(input, this);//recalculate needs of output
+		cycleIn = Aoutput; //Calculate the time on
+		digitalWrite(ssrPin, HIGH);
+		return;
+	}
+	timeCounter++;// if no condition incounter, increase counter
+}
