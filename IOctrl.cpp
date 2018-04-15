@@ -29,12 +29,11 @@
 #include "IOctrl.h"
 #include <ArduinoJson.h>
 
-void RTDinChannels::channelSet ( char* name, byte pin, bool switchCh, float inOffset) { //setup temp input
+void RTDinChannels::channelSet ( char* name, byte pin, float inOffset) { //setup temp input
     strcpy(channelName, name);
     AinputPin = pin;
     Ainput = 0;
     offset = inOffset;
-    RTDSwitch = switchCh;
   }
 
 JsonObject& RTDinChannels::backupInput(JsonBuffer& jsonBuffer){

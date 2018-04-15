@@ -42,13 +42,11 @@ class RTDinChannels {
 	  RTDinChannels() {
 	    Ainput = 0;
 	    offset = 0;
-	    RTDSwitch = false;
 		}
-		void channelSet ( char* name, byte pin, bool switchCh, float inOffset);
+		void channelSet ( char* name, byte pin, float inOffset = 0);
 		byte AinputPin;
 		float Ainput;
 		int offset = 0;
-		bool RTDSwitch;
 		char channelName[20];
 		JsonObject& backupInput(JsonBuffer& jsonBuffer);
 		void restoreInput(JsonObject& json) ; 
