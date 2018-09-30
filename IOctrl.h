@@ -1,4 +1,6 @@
 /*
+V2.0
+
   Copyright (c) 15/04/2018
 
     By Nitrof
@@ -21,15 +23,15 @@
   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */  
 
+
+
 #ifndef IOctrl_H
 #define IOctrl_H
 
-#if (ARDUINO >= 100)
-    #include "Arduino.h"
-#else
-    #include "WProgram.h"
-#endif
+#include "Arduino.h"
+
 #include <ArduinoJson.h>
+#include <TimeOut.h>
 
 const int bitScale = 12;
 #define floatToFixed(x)(x*(long)(1<<bitScale))
@@ -52,12 +54,12 @@ class RTDinChannels {
 		void restoreInput(JsonObject& json) ; 
 };
 
-class SSRoutput {
+class SSRoutput : public TimeOut {
 	public:
 
 	  	SSRoutput();
 	  	void OutChannels(byte ouputPin, float Sp, float Smm, bool ChSwitch);
-		void ssrOut(RTDinChannels* input);
+		void ssrOut(RTDinChannels & input);
 		void dutyCycle(unsigned int dutyCycle);
 	  	unsigned long Aoutput = 0;
 	  	float sp;
@@ -68,12 +70,10 @@ class SSRoutput {
 		void restoreSSROutput(JsonObject& output);
 		void toggleSwitch();
 	private:
+		void TO_callbackCaller();
 		float _smm;
 	  	byte ssrPin;
-		unsigned int _dutyCycle = 100; //time of the loop
-		unsigned int cycleIn = 0;
-  		//unsigned int cycleOut = 0;
-  		unsigned long timeCounter = 0;
+		unsigned int _dutyCycle = 10000; //time of the loop in ms
   		bool state = false;
 };
 
@@ -81,7 +81,7 @@ class Regulator {
 	public:
 		Regulator();
 		Regulator(byte K, float vs);
-		unsigned int regLoop(RTDinChannels* input, SSRoutput* output);
+		unsigned int regLoop(RTDinChannels & input, SSRoutput & output);
 		void gain(byte K);
 		void sustain(float vs);
 	private:
